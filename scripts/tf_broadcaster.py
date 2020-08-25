@@ -6,7 +6,7 @@ import threading
 
 class TFBroadcaster():
     def __init__(self):
-        rospy.init_node("fixed_tf_broadcater")
+        #rospy.init_node("fixed_tf_broadcater") for debugging
         self.points = []
         self.br = tf.TransformBroadcaster()
         self.rate = rospy.Rate(10.0)
@@ -15,8 +15,8 @@ class TFBroadcaster():
         self.object_orientation = None
 
     def update_object_pose(self, object_position, object_orientation, frame_name, parent_frame="world"):
-        self.object_position = object_position
-        self.object_orientation = object_orientation
+        self.object_position = [object_position.x, object_position.y, object_position.z]
+        self.object_orientation = [object_orientation.x, object_orientation.y, object_orientation.z, object_orientation.w]
         self.object_frame_name = frame_name
         self.object_parent_frame = parent_frame
         self.start_publishing()
