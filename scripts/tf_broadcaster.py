@@ -24,6 +24,7 @@ class TFBroadcaster():
     def update_points(self, points):
         assert points is not None, "Points must not be None"
         self.points = points
+        self.start_publishing()
           
     def start_publishing(self):
         if not self.thread_started:
@@ -42,9 +43,10 @@ class TFBroadcaster():
                                   "point_" + str(i), # child
                                   "palm_link") # parent
             # object frame
-            self.br.sendTransform(self.object_position,
-                                  self.object_orientation,
-                                  rospy.Time.now(),
-                                  self.object_frame_name,
-                                  self.object_parent_frame)
+            if self.object_position is not None:
+                self.br.sendTransform(self.object_position,
+                                      self.object_orientation,
+                                      rospy.Time.now(),
+                                      self.object_frame_name,
+                                      self.object_parent_frame)
             self.rate.sleep()
