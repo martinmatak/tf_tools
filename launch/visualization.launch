@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+  <node name="robot_state_visualization" pkg="tf_tools" type="robot_state_visualization.py" output="screen"/>
+</launch>
