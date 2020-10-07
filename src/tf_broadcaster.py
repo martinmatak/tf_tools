@@ -36,28 +36,28 @@ class TFBroadcaster():
 
     def update_points_markers(self, points, frames):
         for i, finger in enumerate(points):
-            marker = Marker()
-            marker.header.frame_id = frames[i]
-            marker.ns = "points=" + str(i)
-            marker.id = i
-
-            marker.type = marker.POINTS
-            marker.action = marker.ADD
-
-            marker.scale.x = .05
-            marker.scale.y = .05
-
-            marker = set_color(marker, i)
-
             for j in range(finger.shape[1]):
-                point = finger[:,j]
-                p = Point()
-                p.x = point[0]
-                p.y = point[1]
-                p.z = point[2]
+                marker = Marker()
+                marker.header.frame_id = frames[i]
+                marker.ns = "points=" + str(i)
+                marker.id = j
 
-                marker.points.append(p)
-            self.points_markers.append(marker)
+                marker.type = marker.SPHERE
+                marker.action = marker.ADD
+
+                marker.scale.x = .003
+                marker.scale.y = .003
+                marker.scale.z = .003
+
+                marker = set_color(marker, i)
+
+                marker.pose.orientation.w = 1.0
+
+                point = finger[:,j]
+                marker.pose.position.x = point[0]
+                marker.pose.position.y = point[1]
+                marker.pose.position.z = point[2]
+                self.points_markers.append(marker)
 
         self.start_publishing()
 
