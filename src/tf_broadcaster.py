@@ -10,7 +10,7 @@ from scipy.spatial.transform import Rotation as R
 
 class TFBroadcaster():
     def __init__(self):
-        rospy.init_node("fixed_tf_broadcater")# for debugging
+        #rospy.init_node("fixed_tf_broadcater")# for debugging
         self.points = []
         self.planes_markers = []
         self.marker_pub = rospy.Publisher("planes", Marker, queue_size=10)
@@ -34,7 +34,8 @@ class TFBroadcaster():
 
     def update_planes(self, planes, frame_id):
         for i, plane in enumerate(planes):
-            x,y,z,center = plane
+            axis, origin = plane
+            x,y,z = axis
 
             marker = Marker()
             marker.header.frame_id = frame_id
@@ -44,9 +45,9 @@ class TFBroadcaster():
             marker.type = marker.CUBE
             marker.action = marker.ADD
 
-            marker.pose.position.x = center[0]
-            marker.pose.position.y = center[1]
-            marker.pose.position.z = center[2]
+            marker.pose.position.x = origin[0]
+            marker.pose.position.y = origin[1]
+            marker.pose.position.z = origin[2]
 
             # orientation
             rot_matrix = np.matrix([[x[0,0], y[0,0], z[0,0]],
