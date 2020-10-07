@@ -32,13 +32,13 @@ class TFBroadcaster():
         self.points = points
         self.start_publishing()
 
-    def update_planes(self, planes, frame_id):
+    def update_planes(self, planes, frames):
         for i, plane in enumerate(planes):
             axis, origin = plane
             x,y,z = axis
 
             marker = Marker()
-            marker.header.frame_id = frame_id
+            marker.header.frame_id = frames[i]
             marker.ns = "ns=" + str(i)
             marker.id = i
 
@@ -60,9 +60,9 @@ class TFBroadcaster():
             marker.pose.orientation.z = quat_R[2]
             marker.pose.orientation.w = quat_R[3]
 
-            marker.scale.x = 1.0
-            marker.scale.y = 1.0
-            marker.scale.z = 0.01 # to look like a small plane
+            marker.scale.x = 0.05
+            marker.scale.y = 0.05
+            marker.scale.z = 0.001 # to look like a small plane
 
             #r,g,b,y depending on i
             marker = set_color(marker, i)
