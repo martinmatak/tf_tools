@@ -6,6 +6,7 @@ import threading
 import numpy as np
 from math import sqrt as sqrt
 from visualization_msgs.msg import Marker
+from geometry_msgs.msg import Point
 from scipy.spatial.transform import Rotation as R
 
 class TFBroadcaster():
@@ -13,6 +14,7 @@ class TFBroadcaster():
         #rospy.init_node("fixed_tf_broadcater")# for debugging
         self.points = []
         self.planes_markers = []
+        self.points_markers = []
         self.marker_pub = rospy.Publisher("planes", Marker, queue_size=10)
         self.br = tf.TransformBroadcaster()
         self.rate = rospy.Rate(10.0)
@@ -30,6 +32,33 @@ class TFBroadcaster():
     def update_points(self, points):
         assert points is not None, "Points must not be None"
         self.points = points
+        self.start_publishing()
+
+    def update_points_markers(self, points, frames):
+        for i, finger in enumerate(points):
+            marker = Marker()
+            marker.header.frame_id = frames[i]
+            marker.ns = "points=" + str(i)
+            marker.id = i
+
+            marker.type = marker.POINTS
+            marker.action = marker.ADD
+
+            marker.scale.x = .05
+            marker.scale.y = .05
+
+            marker = set_color(marker, i)
+
+            for j in range(finger.shape[1]):
+                point = finger[:,j]
+                p = Point()
+                p.x = point[0]
+                p.y = point[1]
+                p.z = point[2]
+
+                marker.points.append(p)
+            self.points_markers.append(marker)
+
         self.start_publishing()
 
     def update_planes(self, planes, frames):
@@ -98,6 +127,10 @@ class TFBroadcaster():
                 marker.header.stamp = rospy.Time.now()
                 self.marker_pub.publish(marker)
 
+            for marker in self.points_markers:
+                marker.header.stamp = rospy.Time.now()
+                self.marker_pub.publish(marker)
+
             self.rate.sleep()
 
 def set_color(marker,i):
@@ -124,20 +157,14 @@ def set_color(marker,i):
 '''
 def main():
     broadcaster = TFBroadcaster()
-    eig_v1 = np.matrix([[sqrt(0.5), sqrt(0.5), 0]]).T
-    eig_v2 = np.matrix([[-sqrt(0.5), sqrt(0.5), 0]]).T
-    normal = np.matrix([[0,0,1]]).T
-    center_1 = [1,2,3]
-    center_2 = [2,2,2]
-    center_3 = [3,2,1]
-    center_4 = [1,1,0]
-    assert normal.shape == (3,1)
-    plane_1 = (eig_v1, eig_v2, normal, center_1)
-    plane_2 = (eig_v1, eig_v2, normal, center_2)
-    plane_3 = (eig_v1, eig_v2, normal, center_3)
-    plane_4 = (eig_v1, eig_v2, normal, center_4)
-    planes = [plane_1, plane_2, plane_3, plane_4]
-    broadcaster.update_planes(planes, "map")
+    index = np.random.rand(3,3)
+    middle = np.random.rand(3,3)
+    ring = np.random.rand(3,3)
+    thumb = np.random.rand(3,3)
+   
+    frames = ["map", "map", "map", "map"]
+    points = [index, middle, ring, thumb]
+    broadcaster.update_points_markers(points, frames)
     broadcaster.publish()
 
 if __name__ == "__main__":
