@@ -23,6 +23,7 @@ class TFClient:
         req.ring_points = points[2].ravel('F')
         req.thumb_points = points[3].ravel('F')
         req.string_data = frames
+
         rospy.wait_for_service(self.srv_name)
         try:
             service = rospy.ServiceProxy(self.srv_name, Data)
@@ -36,7 +37,38 @@ class TFClient:
         req.control_mode = 2
         req.data = extract_data_from_planes(planes)
         req.string_data = frames
-        print("request: ", req)
+
+        rospy.wait_for_service(self.srv_name)
+        try:
+            service = rospy.ServiceProxy(self.srv_name, Data)
+            resp = service(req)
+            return resp.success
+        except rospy.ServiceException as e:
+            print("Service call failed: %s"%e)
+
+    def update_closest_points(self, points):
+        points_for_visualization = []
+        for i in range(points.shape[1]):
+            point = points[:,i]
+            points_for_visualization += point.tolist()
+        req = DataRequest()
+        req.control_mode = 3
+        req.data = points_for_visualization
+
+        rospy.wait_for_service(self.srv_name)
+        try:
+            service = rospy.ServiceProxy(self.srv_name, Data)
+            resp = service(req)
+            return resp.success
+        except rospy.ServiceException as e:
+            print("Service call failed: %s"%e)
+
+    def update_object_pose(self, position, orientation, obj_frame, parent_frame="world"):
+        req = DataRequest()
+        req.control_mode = 4
+        req.data = position + orientation # concatenation
+        req.string_data = [obj_frame, parent_frame]
+
         rospy.wait_for_service(self.srv_name)
         try:
             service = rospy.ServiceProxy(self.srv_name, Data)
@@ -54,5 +86,4 @@ def extract_data_from_planes(planes):
         data += y.ravel().tolist()
         data += z.ravel().tolist()
         data += origin.ravel().tolist()
-    print("data: ", data)
     return data

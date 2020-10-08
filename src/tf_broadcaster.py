@@ -27,36 +27,39 @@ class TFBroadcaster():
 
     def callback(self, req):
         control_mode = req.control_mode
-        string_data = req.string_data
 
-        # points as markers
-        if control_mode == 1:
+        if control_mode == 1: # points as markers
             points = []
             points.append(parse_points(req.index_points))
             points.append(parse_points(req.middle_points))
             points.append(parse_points(req.ring_points))
             points.append(parse_points(req.thumb_points))
-            frames = string_data
+            frames = req.string_data
             self.update_points_markers(points, frames)
             return True
-        elif control_mode == 2:
+        elif control_mode == 2: # planes visualization
             planes = parse_planes(req.data)
-            frames = string_data
+            frames = req.string_data
             self.update_planes(planes, frames)
             return True
+        elif control_mode == 3: # closest points visualization
+            self.points = []
+            points = parse_points(req.data)
+            for i in range(points.shape[1]):
+                point = points[:,i]
+                self.points.append(point)
+        elif control_mode == 4: # object pose TF
+            self.update_object_pose(req)
+        else:
+            raise Exception("mode not supported yet")
+         
         return False
-
-    def update_object_pose(self, object_position, object_orientation, frame_name, parent_frame="world"):
-        self.object_position = [object_position.x, object_position.y, object_position.z]
-        self.object_orientation = [object_orientation.x, object_orientation.y, object_orientation.z, object_orientation.w]
-        self.object_frame_name = frame_name
-        self.object_parent_frame = parent_frame
-        self.start_publishing()
-
-    def update_points(self, points):
-        assert points is not None, "Points must not be None"
-        self.points = points
-        self.start_publishing()
+        
+    def update_object_pose(self, req):
+        self.object_position = [req.data[0], req.data[1], req.data[2]]
+        self.object_orientation = [req.data[3], req.data[4], req.data[5], req.data[5]]
+        self.object_frame_name = req.string_data[0]
+        self.object_parent_frame = req.string_data[1]
 
     def update_points_markers(self, points, frames):
         self.points_markers = []
@@ -119,7 +122,6 @@ class TFBroadcaster():
 
     def publish(self):
         while not rospy.is_shutdown():
-            '''
             # points on the object
             for i, point in enumerate(self.points):
                  self.br.sendTransform(point,
@@ -127,6 +129,7 @@ class TFBroadcaster():
                                   rospy.Time.now(),
                                   "point_" + str(i), # child
                                   "palm_link") # parent
+            
             # object frame
             if self.object_position is not None:
                 self.br.sendTransform(self.object_position,
@@ -134,13 +137,11 @@ class TFBroadcaster():
                                       rospy.Time.now(),
                                       self.object_frame_name,
                                       self.object_parent_frame)
-            '''
+           
             for marker in self.planes_markers:
-                #marker.header.stamp = rospy.Time.now()
                 self.planes_pub.publish(marker)
 
             for marker in self.points_markers:
-                #marker.header.stamp = rospy.Time.now()
                 self.contacts_pub.publish(marker)
 
             self.rate.sleep()
@@ -167,11 +168,11 @@ def set_color(marker,i):
     return marker
 
 def parse_points(points):
-    np_finger = np.zeros((3,3))
-    np_finger[:,0] = points[0:3]
-    np_finger[:,1] = points[3:6]
-    np_finger[:,2] = points[6:9]
-    return np_finger
+    nr_points = len(points) / 3
+    np_points = np.zeros((3,nr_points))
+    for i in range(nr_points):
+        np_points[:,i] = points[i*3:(i+1)*3]
+    return np_points
 
 def parse_plane(data):
     x = np.matrix(data[0:3]).T
