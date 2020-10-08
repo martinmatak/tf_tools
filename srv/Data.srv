@@ -1,0 +1,10 @@
+int64 control_mode
+float64[] index_points
+float64[] middle_points 
+float64[] ring_points
+float64[] thumb_points
+float64[] data
+string[] string_data
+---
+bool success
+

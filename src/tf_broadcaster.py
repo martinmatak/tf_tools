@@ -5,22 +5,44 @@ import tf
 import threading
 import numpy as np
 from math import sqrt as sqrt
+from tf_tools.srv import Data
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
 from scipy.spatial.transform import Rotation as R
 
 class TFBroadcaster():
     def __init__(self):
-        #rospy.init_node("fixed_tf_broadcater")# for debugging
+        rospy.init_node("fixed_tf_broadcater")# for debugging
         self.points = []
         self.planes_markers = []
         self.points_markers = []
-        self.marker_pub = rospy.Publisher("planes", Marker, queue_size=10)
+        self.contacts_pub = rospy.Publisher("contact_points", Marker, queue_size=1)
+        self.planes_pub = rospy.Publisher("planes", Marker, queue_size=1)
         self.br = tf.TransformBroadcaster()
-        self.rate = rospy.Rate(10.0)
+        self.rate = rospy.Rate(1)
         self.thread_started = False
         self.object_position = None
         self.object_orientation = None
+        s = rospy.Service("visualize", Data, self.callback)
+
+    def callback(self, req):
+        print("callback triggered")
+        control_mode = req.control_mode
+        string_data = req.string_data
+
+        # points as markers
+        if control_mode == 1:
+            points = []
+            frames = []
+            points.append(parse_points(req.index_points))
+            points.append(parse_points(req.middle_points))
+            points.append(parse_points(req.ring_points))
+            points.append(parse_points(req.thumb_points))
+            frames = string_data
+            self.update_points_markers(points, frames)
+
+        return True
+
 
     def update_object_pose(self, object_position, object_orientation, frame_name, parent_frame="world"):
         self.object_position = [object_position.x, object_position.y, object_position.z]
@@ -35,31 +57,26 @@ class TFBroadcaster():
         self.start_publishing()
 
     def update_points_markers(self, points, frames):
+        self.points_markers = []
         for i, finger in enumerate(points):
+            marker = Marker()
+            marker.header.frame_id = frames[i]
+            marker.ns = "points=" + str(i)
+            marker.type = marker.SPHERE_LIST
+            marker.action = marker.ADD
+            marker.scale.x = .003
+            marker.scale.y = .003
+            marker.scale.z = .003
+            marker = set_color(marker, i)
+            marker.pose.orientation.w = 1.0
             for j in range(finger.shape[1]):
-                marker = Marker()
-                marker.header.frame_id = frames[i]
-                marker.ns = "points=" + str(i)
-                marker.id = j
-
-                marker.type = marker.SPHERE
-                marker.action = marker.ADD
-
-                marker.scale.x = .003
-                marker.scale.y = .003
-                marker.scale.z = .003
-
-                marker = set_color(marker, i)
-
-                marker.pose.orientation.w = 1.0
-
-                point = finger[:,j]
-                marker.pose.position.x = point[0]
-                marker.pose.position.y = point[1]
-                marker.pose.position.z = point[2]
-                self.points_markers.append(marker)
-
-        self.start_publishing()
+                point_raw = finger[:,j]
+                point = Point()
+                point.x = point_raw[0]
+                point.y = point_raw[1]
+                point.z = point_raw[2]
+                marker.points.append(point)
+            self.points_markers.append(marker)
 
     def update_planes(self, planes, frames):
         for i, plane in enumerate(planes):
@@ -97,17 +114,9 @@ class TFBroadcaster():
             marker = set_color(marker, i)
             self.planes_markers.append(marker)
 
-        self.start_publishing()
-
-    def start_publishing(self):
-        if not self.thread_started:
-            thread = threading.Thread(target=self.publish, args=(), kwargs={})
-            thread.setDaemon(True)
-            thread.start()
-            self.thread_started = True
-
     def publish(self):
         while not rospy.is_shutdown():
+            '''
             # points on the object
             for i, point in enumerate(self.points):
                  self.br.sendTransform(point,
@@ -122,14 +131,14 @@ class TFBroadcaster():
                                       rospy.Time.now(),
                                       self.object_frame_name,
                                       self.object_parent_frame)
-
+            '''
             for marker in self.planes_markers:
-                marker.header.stamp = rospy.Time.now()
-                self.marker_pub.publish(marker)
+                #marker.header.stamp = rospy.Time.now()
+                self.planes_pub.publish(marker)
 
             for marker in self.points_markers:
-                marker.header.stamp = rospy.Time.now()
-                self.marker_pub.publish(marker)
+                #marker.header.stamp = rospy.Time.now()
+                self.contacts_pub.publish(marker)
 
             self.rate.sleep()
 
@@ -154,19 +163,16 @@ def set_color(marker,i):
 
     return marker
 
-'''
+def parse_points(points):
+    np_finger = np.zeros((3,3))
+    np_finger[:,0] = points[0:3]
+    np_finger[:,1] = points[3:6]
+    np_finger[:,2] = points[6:9]
+    return np_finger
+
 def main():
     broadcaster = TFBroadcaster()
-    index = np.random.rand(3,3)
-    middle = np.random.rand(3,3)
-    ring = np.random.rand(3,3)
-    thumb = np.random.rand(3,3)
-   
-    frames = ["map", "map", "map", "map"]
-    points = [index, middle, ring, thumb]
-    broadcaster.update_points_markers(points, frames)
     broadcaster.publish()
 
 if __name__ == "__main__":
     main()
-'''
