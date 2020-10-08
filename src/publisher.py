@@ -3,7 +3,12 @@ import random as rand
 from geometry_msgs.msg import PointStamped, Point
 
 def main():
-    pub = rospy.Publisher("biotac/0/contact_point", PointStamped, queue_size=1)
+    pub_0 = rospy.Publisher("biotac/0/contact_point", PointStamped, queue_size=1)
+    pub_1 = rospy.Publisher("biotac/1/contact_point", PointStamped, queue_size=1)
+    pub_2 = rospy.Publisher("biotac/2/contact_point", PointStamped, queue_size=1)
+    pub_3 = rospy.Publisher("biotac/3/contact_point", PointStamped, queue_size=1)
+    
+    pubs = [pub_0, pub_1, pub_2, pub_3]
     rospy.init_node("biotac_publisher")
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
@@ -14,8 +19,8 @@ def main():
         point.y = rand.random() * 0.01
         point.z = rand.random() * 0.01
         pstamped.point = point
-        raw_input("press enter to publish")
-        pub.publish(pstamped)
+        raw_input("press enter to publish a random contact")
+        pubs[rand.randint(0,3)].publish(pstamped)
         rate.sleep()
 
 if __name__ == "__main__":
