@@ -26,23 +26,25 @@ class TFBroadcaster():
         s = rospy.Service("visualize", Data, self.callback)
 
     def callback(self, req):
-        print("callback triggered")
         control_mode = req.control_mode
         string_data = req.string_data
 
         # points as markers
         if control_mode == 1:
             points = []
-            frames = []
             points.append(parse_points(req.index_points))
             points.append(parse_points(req.middle_points))
             points.append(parse_points(req.ring_points))
             points.append(parse_points(req.thumb_points))
             frames = string_data
             self.update_points_markers(points, frames)
-
-        return True
-
+            return True
+        elif control_mode == 2:
+            planes = parse_planes(req.data)
+            frames = string_data
+            self.update_planes(planes, frames)
+            return True
+        return False
 
     def update_object_pose(self, object_position, object_orientation, frame_name, parent_frame="world"):
         self.object_position = [object_position.x, object_position.y, object_position.z]
@@ -79,6 +81,7 @@ class TFBroadcaster():
             self.points_markers.append(marker)
 
     def update_planes(self, planes, frames):
+        self.planes_markers = []
         for i, plane in enumerate(planes):
             axis, origin = plane
             x,y,z = axis
@@ -106,8 +109,8 @@ class TFBroadcaster():
             marker.pose.orientation.z = quat_R[2]
             marker.pose.orientation.w = quat_R[3]
 
-            marker.scale.x = 0.05
-            marker.scale.y = 0.05
+            marker.scale.x = 0.02
+            marker.scale.y = 0.02
             marker.scale.z = 0.001 # to look like a small plane
 
             #r,g,b,y depending on i
@@ -169,6 +172,22 @@ def parse_points(points):
     np_finger[:,1] = points[3:6]
     np_finger[:,2] = points[6:9]
     return np_finger
+
+def parse_plane(data):
+    x = np.matrix(data[0:3]).T
+    y = np.matrix(data[3:6]).T
+    z = np.matrix(data[6:9]).T
+    origin = np.matrix(data[9:12]).T
+    plane = [(x,y,z), origin]
+    return plane
+
+def parse_planes(data):
+    planes = []
+    for i in range(4):
+        planes.append(parse_plane(data[i*12:(i+1)*12]))
+
+    return planes
+    
 
 def main():
     broadcaster = TFBroadcaster()
