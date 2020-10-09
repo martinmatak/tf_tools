@@ -3,10 +3,10 @@ import random as rand
 from geometry_msgs.msg import PointStamped, Point
 
 def main():
-    pub_0 = rospy.Publisher("biotac/0/contact_point", PointStamped, queue_size=1)
-    pub_1 = rospy.Publisher("biotac/1/contact_point", PointStamped, queue_size=1)
-    pub_2 = rospy.Publisher("biotac/2/contact_point", PointStamped, queue_size=1)
-    pub_3 = rospy.Publisher("biotac/3/contact_point", PointStamped, queue_size=1)
+    pub_0 = rospy.Publisher("biotac/index_tip/contact_point", PointStamped, queue_size=1)
+    pub_1 = rospy.Publisher("biotac/middle_tip/contact_point", PointStamped, queue_size=1)
+    pub_2 = rospy.Publisher("biotac/ring_tip/contact_point", PointStamped, queue_size=1)
+    pub_3 = rospy.Publisher("biotac/thumb_tip/contact_point", PointStamped, queue_size=1)
     
     pubs = [pub_0, pub_1, pub_2, pub_3]
     rospy.init_node("biotac_publisher")
