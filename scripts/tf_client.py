@@ -77,6 +77,23 @@ class TFClient:
         except rospy.ServiceException as e:
             print("Service call failed: %s"%e)
 
+    def update_projected_point(self, point, frame):
+        req = DataRequest()
+        req.control_mode = 5
+        req.data = list(point.ravel())
+        req.string_data = [frame]
+
+        return self.call_service(req)
+
+    def call_service(self, req):
+        rospy.wait_for_service(self.srv_name)
+        try:
+            service = rospy.ServiceProxy(self.srv_name, Data)
+            resp = service(req)
+            return resp.success
+        except rospy.ServiceException as e:
+            print("Service call failed: %s"%e)
+
 
 def extract_data_from_planes(planes):
     data = []

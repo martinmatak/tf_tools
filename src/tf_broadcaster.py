@@ -18,11 +18,13 @@ class TFBroadcaster():
         self.points_markers = []
         self.contacts_pub = rospy.Publisher("contact_points", Marker, queue_size=1)
         self.planes_pub = rospy.Publisher("planes", Marker, queue_size=1)
+        self.projected_pub = rospy.Publisher("projected_points", Marker, queue_size=1)
         self.br = tf.TransformBroadcaster()
         self.rate = rospy.Rate(1)
         self.thread_started = False
         self.object_position = None
         self.object_orientation = None
+        self.projected_point = None
         s = rospy.Service("visualize", Data, self.callback)
 
     def callback(self, req):
@@ -50,6 +52,14 @@ class TFBroadcaster():
                 self.points.append(point)
         elif control_mode == 4: # object pose TF
             self.update_object_pose(req)
+        elif control_mode == 5: # projected point
+            point = np.zeros((3,1))
+            data = req.data
+            point[0,0] = data[0]
+            point[1,0] = data[1]
+            point[2,0] = data[2]
+            frame = req.string_data[0]
+            self.update_projected_point(point, frame)
         else:
             raise Exception("mode not supported yet")
          
@@ -82,6 +92,28 @@ class TFBroadcaster():
                 point.z = point_raw[2]
                 marker.points.append(point)
             self.points_markers.append(marker)
+
+    def update_projected_point(self, point, frame):
+        print("updated projected point")
+        self.projected_point = []
+        marker = Marker()
+        marker.header.frame_id = frame
+        marker.type = marker.SPHERE
+        marker.action = marker.ADD
+        marker.scale.x = .003
+        marker.scale.y = .003
+        marker.scale.z = .003
+
+        marker.color.a = 1
+        marker.color.r = 255
+        marker.color.g = 140
+        marker.color.b = 0
+        marker.pose.orientation.w = 1.0
+        marker.pose.position.x = point[0]
+        marker.pose.position.y = point[1]
+        marker.pose.position.z = point[2]
+
+        self.projected_point = marker
 
     def update_planes(self, planes, frames):
         self.planes_markers = []
@@ -144,6 +176,9 @@ class TFBroadcaster():
             for marker in self.points_markers:
                 self.contacts_pub.publish(marker)
 
+            if self.projected_point is not None:
+                self.projected_pub.publish(self.projected_point)
+
             self.rate.sleep()
 
 def set_color(marker,i):
@@ -188,7 +223,6 @@ def parse_planes(data):
         planes.append(parse_plane(data[i*12:(i+1)*12]))
 
     return planes
-    
 
 def main():
     broadcaster = TFBroadcaster()
