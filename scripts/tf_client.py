@@ -63,10 +63,14 @@ class TFClient:
         except rospy.ServiceException as e:
             print("Service call failed: %s"%e)
 
-    def update_object_pose(self, position, orientation, obj_frame, parent_frame="world"):
+    def update_object_pose(self, position, rotation, obj_frame, parent_frame="world"):
+        '''
+        @param position Point
+        @param rotation Quaternion
+        '''
         req = DataRequest()
         req.control_mode = 4
-        req.data = position + orientation # concatenation
+        req.data = [position.x, position.y, position.z, rotation.x, rotation.y, rotation.z, rotation.w]
         req.string_data = [obj_frame, parent_frame]
 
         rospy.wait_for_service(self.srv_name)
