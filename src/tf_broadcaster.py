@@ -67,7 +67,7 @@ class TFBroadcaster():
         
     def update_object_pose(self, req):
         self.object_position = [req.data[0], req.data[1], req.data[2]]
-        self.object_orientation = [req.data[3], req.data[4], req.data[5], req.data[5]]
+        self.object_orientation = [req.data[3], req.data[4], req.data[5], req.data[6]]
         self.object_frame_name = req.string_data[0]
         self.object_parent_frame = req.string_data[1]
 
