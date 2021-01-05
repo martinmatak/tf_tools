@@ -1,8 +1,26 @@
 import rospy
 import random as rand
-from geometry_msgs.msg import PointStamped, Point
+import tf
+from geometry_msgs.msg import PointStamped, Point, Pose
 
 def main():
+    rospy.init_node("object_pose_publisher")
+    br = tf.TransformBroadcaster()
+    rate = rospy.Rate(10)
+#    while not rospy.is_shutdown():
+#        br.sendTransform((0, -0.8, 0.59),
+#                          tf.transformations.quaternion_from_euler(0, 0, 0),
+#                          rospy.Time.now(),
+ #                         "estimated_object_pose", "world")
+    while not rospy.is_shutdown():
+        br.sendTransform((-0.02313072,  0.15070242,  0.0952749),
+                          #(0.2969, 0.6622, -0.2568, 0.6382),
+                          tf.transformations.quaternion_from_euler(-2.048145, -2.9851165, -2.3170815),
+                          rospy.Time.now(),
+                          "palm_link", "estimated_object_pose")
+
+    #rospy.spin()
+    '''
     pub_0 = rospy.Publisher("biotac/index_tip/contact_point", PointStamped, queue_size=1)
     pub_1 = rospy.Publisher("biotac/middle_tip/contact_point", PointStamped, queue_size=1)
     pub_2 = rospy.Publisher("biotac/ring_tip/contact_point", PointStamped, queue_size=1)
@@ -22,6 +40,7 @@ def main():
         raw_input("press enter to publish a random contact")
         pubs[rand.randint(0,3)].publish(pstamped)
         rate.sleep()
+    '''
 
 if __name__ == "__main__":
     try:
