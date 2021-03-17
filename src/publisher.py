@@ -13,11 +13,10 @@ def main():
 #                          rospy.Time.now(),
  #                         "estimated_object_pose", "world")
     while not rospy.is_shutdown():
-        br.sendTransform((-0.02313072,  0.15070242,  0.0952749),
-                          #(0.2969, 0.6622, -0.2568, 0.6382),
-                          tf.transformations.quaternion_from_euler(-2.048145, -2.9851165, -2.3170815),
+        br.sendTransform((0, -0.8,  0.59),
+                          (0, 0, 0, 1),
                           rospy.Time.now(),
-                          "palm_link", "estimated_object_pose")
+                          "estimated_object_pose", "world")
 
     #rospy.spin()
     '''

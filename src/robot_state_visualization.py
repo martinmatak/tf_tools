@@ -20,8 +20,8 @@ class RobotStatePublisher():
                        "middle_joint_0", "middle_joint_1", "middle_joint_2", "middle_joint_3",
                        "ring_joint_0", "ring_joint_1", "ring_joint_2", "ring_joint_3",
                        "thumb_joint_0", "thumb_joint_1", "thumb_joint_2", "thumb_joint_3"]
-        #all_joints = arm_joints + hand_joints
-        all_joints = hand_joints
+        all_joints = arm_joints + hand_joints
+        #all_joints = hand_joints
 
         links = ["index_link_0", "index_link_1", "index_link_2", "index_link_3",
                  "middle_link_0", "middle_link_1", "middle_link_2", "middle_link_3",
@@ -33,12 +33,23 @@ class RobotStatePublisher():
         color = get_color('deepskyblue')
         self.robot_state.highlight_links = [ObjectColor(id=l, color=color) for l in links]
         update_state_service = rospy.Service("update_robot_state", UpdateRobotState, self.update_robot_state)
+        self.arm_q_previous = None
+        self.arm_changed = True
 
     def update_robot_state(self, request):
         arm_msg = rospy.wait_for_message("lbr4/joint_states", JointState)
         arm_joints = arm_msg.position
         hand_joints = request.joint_state
+        print("hand joints: ", hand_joints)
+        if self.arm_q_previous is not None:
+            for i in range(7):
+                if abs(arm_joints[i] - self.arm_q_previous[i]) > 0.05:
+                    self.arm_changed = True
+        if self.arm_changed:
+            print("arm joints: ", arm_joints)
         self.robot_state.state.joint_state.position = arm_joints + hand_joints
+        self.arm_q_previous = arm_joints
+        self.arm_changed = False
         return UpdateRobotStateResponse(success=True)
 
 def get_color(color_name):

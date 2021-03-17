@@ -32,7 +32,7 @@ class RobotStatePublisher():
         self.robot_state.state.joint_state.position = [jvalue for i in range(len(all_joints))]
         #self.robot_state.state.joint_state.position = [
         #        -0.32902139845484335, 0.25842531985086836, -0.031838223531752696, -0.07480663652901409, -0.02899749818495323, -0.07829753524648275, 0.00020138101391786734, 0.0021933261367976797, 0.08626520755942302, -0.12569796558433133, 0.036194250465382716, 0.03316555749083516, 1.4398069372375693, 0.07860907941452844, 0.029524747362523307, 0.31397873869704274]
-        color = get_color('deepskyblue')
+        color = get_color('green')
         self.robot_state.highlight_links = [ObjectColor(id=l, color=color) for l in links]
         update_state_service = rospy.Service("update_robot_state", UpdateRobotState, self.update_robot_state)
 
