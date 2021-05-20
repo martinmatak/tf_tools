@@ -21,6 +21,8 @@ class JointStatePublisher():
                        "thumb_joint_0", "thumb_joint_1", "thumb_joint_2", "thumb_joint_3"]
         self.robot_state.name = hand_joints
         self.robot_state.position = [jvalue for i in range(len(hand_joints))]
+        self.robot_state.velocity = [jvalue for i in range(len(hand_joints))]
+        self.robot_state.effort = [jvalue for i in range(len(hand_joints))]
         rospy.Subscriber("/allegro_hand_right/joint_cmd", JointState, self.update_robot_state)
  
 
@@ -28,7 +30,7 @@ class JointStatePublisher():
         #arm_msg = rospy.wait_for_message("lbr4/joint_states", JointState)
         #arm_joints = arm_msg.position
         #self.robot_state.state.joint_state.position = arm_joints + hand_joints
-        self.robot_state.state.joint_state.position = request.joint_state
+        self.robot_state.position = request.position
         #return UpdateRobotStateResponse(success=True)
 
 if __name__ == '__main__':

@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+  <node name="allegro_tf_kinematics" pkg="tf_tools" type="allegro_tf_kinematics.py" output="screen"/>
+</launch>
