@@ -16,9 +16,11 @@ class TFBroadcaster():
         self.points = []
         self.planes_markers = []
         self.points_markers = []
+        self.normals_markers = []
         self.contacts_pub = rospy.Publisher("contact_points", Marker, queue_size=1)
         self.planes_pub = rospy.Publisher("planes", Marker, queue_size=1)
         self.projected_pub = rospy.Publisher("projected_points", Marker, queue_size=1)
+        self.normals_pub = rospy.Publisher("normals", Marker, queue_size=1)
         self.br = tf.TransformBroadcaster()
         self.rate = rospy.Rate(1)
         self.thread_started = False
@@ -60,6 +62,11 @@ class TFBroadcaster():
             point[2,0] = data[2]
             frame = req.string_data[0]
             self.update_projected_point(point, frame)
+        elif control_mode == 6: # visualize normals
+            frame = req.string_data[0]
+            normals_tails = [req.normal_0_tail, req.normal_1_tail, req.normal_2_tail, req.normal_3_tail]
+            normals_tips = [req.normal_0_tip, req.normal_1_tip, req.normal_2_tip, req.normal_3_tip]
+            self.update_normals_markers(normals_tails, normals_tips, frame)
         else:
             raise Exception("mode not supported yet")
          
@@ -92,6 +99,28 @@ class TFBroadcaster():
                 point.z = point_raw[2]
                 marker.points.append(point)
             self.points_markers.append(marker)
+
+    def update_normals_markers(self, normals_tails, normals_tips, frame):
+        for i, normal in enumerate(normals_tails):
+            marker = Marker()
+            marker.header.frame_id = frame
+            marker.ns = "normal=" + str(i)
+            marker.type = marker.ARROW
+            marker.action = marker.ADD
+            marker.scale.x = .003
+            marker.scale.y = .003
+            marker.scale.z = .003
+            marker = set_color(marker, i)
+            marker.pose.orientation.w = 1.0
+
+            tail_array = normals_tails[i]
+            tail = Point(tail_array[0], tail_array[1], tail_array[2])
+
+            tip_array = normals_tips[i]
+            tip = Point(tip_array[0], tip_array[1], tip_array[2])
+
+            marker.points = [tail, tip]
+            self.normals_markers.append(marker)
 
     def update_projected_point(self, point, frame):
         print("updated projected point")
@@ -169,15 +198,20 @@ class TFBroadcaster():
                                       rospy.Time.now(),
                                       self.object_frame_name,
                                       self.object_parent_frame)
-           
+          
+            # frames are set in headers
             for marker in self.planes_markers:
                 self.planes_pub.publish(marker)
 
             for marker in self.points_markers:
                 self.contacts_pub.publish(marker)
 
+            for marker in self.normals_markers:
+                self.normals_pub.publish(marker)
+
             if self.projected_point is not None:
                 self.projected_pub.publish(self.projected_point)
+
 
             self.rate.sleep()
 

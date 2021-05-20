@@ -1,10 +1,21 @@
 int64 control_mode
+
 float64[] index_points
 float64[] middle_points 
 float64[] ring_points
 float64[] thumb_points
-float64[] data
+
+float64[] normal_0_tail
+float64[] normal_0_tip
+float64[] normal_1_tail
+float64[] normal_1_tip
+float64[] normal_2_tail
+float64[] normal_2_tip
+float64[] normal_3_tail
+float64[] normal_3_tip
+
 string[] string_data
+float64[] data
 ---
 bool success
 
