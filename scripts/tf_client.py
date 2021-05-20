@@ -32,10 +32,16 @@ class TFClient:
         except rospy.ServiceException as e:
             print("Service call failed: %s"%e)
 
-    def update_normals_markers(self, normals_tails, normals_tips, frame):
+    def update_object_normals_markers(self, normals_tails, normals_tips, frame):
+        self.update_normals_markers(normals_tails, normals_tips, frame, "OBJECT")
+
+    def update_fingertips_normals_markers(self, normals_tails, normals_tips, frame):
+        self.update_normals_markers(normals_tails, normals_tips, frame, "FINGERTIP")
+
+    def update_normals_markers(self, normals_tails, normals_tips, frame, mode):
         req = DataRequest()
         req.control_mode = 6
-        req.string_data = [frame]
+        req.string_data = [frame, mode]
 
         req.normal_0_tail = normals_tails[0]
         req.normal_1_tail = normals_tails[1]
