@@ -4,19 +4,27 @@ import tf
 from geometry_msgs.msg import PointStamped, Point, Pose
 
 def main():
-    rospy.init_node("object_pose_publisher")
+    rospy.init_node("world_publisher")
     br = tf.TransformBroadcaster()
     rate = rospy.Rate(10)
-#    while not rospy.is_shutdown():
-#        br.sendTransform((0, -0.8, 0.59),
-#                          tf.transformations.quaternion_from_euler(0, 0, 0),
-#                          rospy.Time.now(),
- #                         "estimated_object_pose", "world")
+
     while not rospy.is_shutdown():
-        br.sendTransform((0, -0.8,  0.59),
+        br.sendTransform((0.0744432974896,-1.01452819533 ,1.2077374635),
+                         (-0.685286722254, 0.106017961757,
+                          0.020948441311,-0.720210707289),
+                          rospy.Time.now(),
+                         "desired_pose", "world")
+
+    while not rospy.is_shutdown():
+        br.sendTransform((0, -0.8, 0.59),
+                          tf.transformations.quaternion_from_euler(0, 0, 0),
+                          rospy.Time.now(),
+                         "estimated_object_pose", "world")
+    while not rospy.is_shutdown():
+        br.sendTransform((0, 0, 0),
                           (0, 0, 0, 1),
                           rospy.Time.now(),
-                          "estimated_object_pose", "world")
+                          "world", "box_link")
 
     #rospy.spin()
     '''

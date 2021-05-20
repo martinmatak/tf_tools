@@ -37,10 +37,11 @@ class RobotStatePublisher():
         update_state_service = rospy.Service("update_robot_state", UpdateRobotState, self.update_robot_state)
 
     def update_robot_state(self, request):
-        arm_msg = rospy.wait_for_message("lbr4/joint_states", JointState)
-        arm_joints = arm_msg.position
+        #arm_msg = rospy.wait_for_message("lbr4/joint_states", JointState)
+        #arm_joints = arm_msg.position
+        #self.robot_state.state.joint_state.position = arm_joints + hand_joints
         hand_joints = request.joint_state
-        self.robot_state.state.joint_state.position = arm_joints + hand_joints
+        self.robot_state.state.joint_state.position = hand_joints
         return UpdateRobotStateResponse(success=True)
 
 def get_color(color_name):
@@ -53,7 +54,7 @@ def get_color(color_name):
     return ColorRGBA(*c)
 
 if __name__ == '__main__':
-    rsp_grad = RobotStatePublisher("floating_allegro", 0)
+    rsp_grad = RobotStatePublisher("floating_allegro", 1)
     rate = rospy.Rate(10.0)
     while not rospy.is_shutdown():
         rsp_grad.robot_state_pub.publish(rsp_grad.robot_state)
