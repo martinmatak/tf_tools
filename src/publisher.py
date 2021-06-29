@@ -9,17 +9,22 @@ def main():
     rate = rospy.Rate(10)
 
     while not rospy.is_shutdown():
-        br.sendTransform((0.0744432974896,-1.01452819533 ,1.2077374635),
+        br.sendTransform((0.0708566,
+0.0257868,
+0.0590751),
                          (-0.685286722254, 0.106017961757,
                           0.020948441311,-0.720210707289),
                           rospy.Time.now(),
-                         "desired_pose", "world")
+                         "p1", "palm_link")
 
-    while not rospy.is_shutdown():
-        br.sendTransform((0, -0.8, 0.59),
+        br.sendTransform((0.0691224,
+0.0323058,
+0.0590751),
+
                           tf.transformations.quaternion_from_euler(0, 0, 0),
                           rospy.Time.now(),
-                         "estimated_object_pose", "world")
+                         "p2", "palm_link")
+    
     while not rospy.is_shutdown():
         br.sendTransform((0, 0, 0),
                           (0, 0, 0, 1),

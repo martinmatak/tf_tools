@@ -21,7 +21,7 @@ class TFBroadcaster():
         self.contacts_pub = rospy.Publisher("contact_points", Marker, queue_size=1)
         self.planes_pub = rospy.Publisher("planes", Marker, queue_size=1)
         self.projected_pub = rospy.Publisher("projected_points", Marker, queue_size=1)
-        self.object_normals_pub = rospy.Publisher("normals", Marker, queue_size=1)
+        self.object_normals_pub = rospy.Publisher("object_normals", Marker, queue_size=1)
         self.ftips_normals_pub = rospy.Publisher("ftips_normals", Marker, queue_size=1)
         self.br = tf.TransformBroadcaster()
         self.rate = rospy.Rate(1)
@@ -129,7 +129,14 @@ class TFBroadcaster():
             tip_array = normals_tips[i]
             tip = Point(tip_array[0], tip_array[1], tip_array[2])
 
-            marker.points = [tail, tip]
+            # nicer visualization
+            scale = 0.1
+            tip_array_short = [normals_tails[i][0] + (normals_tips[i][0] - normals_tails[i][0]) * scale,
+                               normals_tails[i][1] + (normals_tips[i][1] - normals_tails[i][1]) * scale,
+                               normals_tails[i][2] + (normals_tips[i][2] - normals_tails[i][2]) * scale]
+            tip_short  = Point(tip_array_short[0], tip_array_short[1], tip_array_short[2])
+
+            marker.points = [tail, tip_short]
             if mode == "FINGERTIP":
                 self.ftips_normals_markers.append(marker)
             elif mode == "OBJECT": 

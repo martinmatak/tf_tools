@@ -3,6 +3,7 @@ import roslib
 import rospy
 import threading
 import sys
+import math
 from sensor_msgs.msg import JointState
 from matplotlib import colors
 from moveit_msgs.msg import RobotState, DisplayRobotState, ObjectColor
@@ -21,6 +22,11 @@ class JointStatePublisher():
                        "thumb_joint_0", "thumb_joint_1", "thumb_joint_2", "thumb_joint_3"]
         self.robot_state.name = hand_joints
         self.robot_state.position = [jvalue for i in range(len(hand_joints))]
+        self.robot_state.position = [-0.13+0.12, 0.93-0.08, +0.17, -0.03, 
+                                      0.26, 0.95, 0.0, 0.0, 
+                                      0.0, 0.0, 0.0, 0.0,
+                                      0.0, 0.0, 0.0, 0.0]
+
         self.robot_state.velocity = [jvalue for i in range(len(hand_joints))]
         self.robot_state.effort = [jvalue for i in range(len(hand_joints))]
         rospy.Subscriber("/allegro_hand_right/joint_cmd", JointState, self.update_robot_state)
@@ -30,12 +36,16 @@ class JointStatePublisher():
         #arm_msg = rospy.wait_for_message("lbr4/joint_states", JointState)
         #arm_joints = arm_msg.position
         #self.robot_state.state.joint_state.position = arm_joints + hand_joints
-        self.robot_state.position = request.position
+        if math.isnan(request.position[0]):
+            rospy.logerr("it's NaN")
+            raw_input()
+        else:
+            self.robot_state.position = request.position
         #return UpdateRobotStateResponse(success=True)
 
 if __name__ == '__main__':
     js_publisher = JointStatePublisher("allegro_hand_right/joint_states", 1)
-    rate = rospy.Rate(100.0)
+    rate = rospy.Rate(1000.0)
     while not rospy.is_shutdown():
         js_publisher.robot_state.header.stamp = rospy.Time.now()
         js_publisher.robot_state_pub.publish(js_publisher.robot_state)
