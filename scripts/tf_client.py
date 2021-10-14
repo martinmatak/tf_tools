@@ -110,6 +110,24 @@ class TFClient:
         except rospy.ServiceException as e:
             print("Service call failed: %s"%e)
 
+    def update_mesh_pose(self, position, rotation, obj_frame, parent_frame="world"):
+        '''
+        position and rotation are arrays
+        '''
+        req = DataRequest()
+        req.control_mode = 7
+        req.data = [position[0], position[1], position[2], rotation[0], rotation[1], rotation[2], rotation[3]]
+        req.string_data = [obj_frame, parent_frame]
+
+        rospy.wait_for_service(self.srv_name)
+        try:
+            service = rospy.ServiceProxy(self.srv_name, Data)
+            resp = service(req)
+            return resp.success
+        except rospy.ServiceException as e:
+            print("Service call failed: %s"%e)
+
+
     def update_projected_point(self, point, frame):
         req = DataRequest()
         req.control_mode = 5
