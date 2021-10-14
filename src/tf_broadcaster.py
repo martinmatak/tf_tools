@@ -28,6 +28,8 @@ class TFBroadcaster():
         self.thread_started = False
         self.object_position = None
         self.object_orientation = None
+        self.mesh_position = None
+        self.mesh_orientation = None
         self.projected_point = None
         s = rospy.Service("visualize", Data, self.callback)
 
@@ -54,7 +56,7 @@ class TFBroadcaster():
             for i in range(points.shape[1]):
                 point = points[:,i]
                 self.points.append(point)
-        elif control_mode == 4: # object pose TF
+        elif control_mode == 4: # estimated object pose TF
             self.update_object_pose(req)
         elif control_mode == 5: # projected point
             point = np.zeros((3,1))
@@ -70,16 +72,30 @@ class TFBroadcaster():
             normals_tails = [req.normal_0_tail, req.normal_1_tail, req.normal_2_tail, req.normal_3_tail]
             normals_tips = [req.normal_0_tip, req.normal_1_tip, req.normal_2_tip, req.normal_3_tip]
             self.update_normals_markers(normals_tails, normals_tips, frame, mode)
+        elif control_mode == 7: # object mesh pose TF
+            self.update_mesh_pose(req)
         else:
             raise Exception("mode not supported yet")
          
         return False
         
     def update_object_pose(self, req):
+        '''
+        Estimated object pose, center of the object.
+        '''
         self.object_position = [req.data[0], req.data[1], req.data[2]]
         self.object_orientation = [req.data[3], req.data[4], req.data[5], req.data[6]]
         self.object_frame_name = req.string_data[0]
         self.object_parent_frame = req.string_data[1]
+
+    def update_mesh_pose(self, req):
+        '''
+        Mesh pose, frame located as in .stl file
+        '''
+        self.mesh_position = [req.data[0], req.data[1], req.data[2]]
+        self.mesh_orientation = [req.data[3], req.data[4], req.data[5], req.data[6]]
+        self.mesh_frame_name = req.string_data[0]
+        self.mesh_parent_frame = req.string_data[1]
 
     def update_points_markers(self, points, frames):
         self.points_markers = []
@@ -218,7 +234,15 @@ class TFBroadcaster():
                                       rospy.Time.now(),
                                       self.object_frame_name,
                                       self.object_parent_frame)
-          
+
+            if self.mesh_position is not None:
+                self.br.sendTransform(self.mesh_position,
+                                      self.mesh_orientation,
+                                      rospy.Time.now(),
+                                      self.mesh_frame_name,
+                                      self.mesh_parent_frame)
+
+
             # frames are set in headers
             for marker in self.planes_markers:
                 self.planes_pub.publish(marker)
