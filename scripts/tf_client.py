@@ -116,6 +116,27 @@ class TFClient:
         '''
         req = DataRequest()
         req.control_mode = 7
+        try:
+            req.data = [position[0], position[1], position[2], rotation[0], rotation[1], rotation[2], rotation[3]]
+        except TypeError:
+            req.data = [position.x, position.y, position.z, rotation.x, rotation.y, rotation.z, rotation.w]
+        req.string_data = [obj_frame, parent_frame]
+
+        rospy.wait_for_service(self.srv_name)
+        try:
+            service = rospy.ServiceProxy(self.srv_name, Data)
+            resp = service(req)
+            return resp.success
+        except rospy.ServiceException as e:
+            print("Service call failed: %s"%e)
+
+
+    def add_frame(self, position, rotation, obj_frame, parent_frame="world"):
+        '''
+        position and rotation are arrays
+        '''
+        req = DataRequest()
+        req.control_mode = 8
         req.data = [position[0], position[1], position[2], rotation[0], rotation[1], rotation[2], rotation[3]]
         req.string_data = [obj_frame, parent_frame]
 
@@ -127,6 +148,20 @@ class TFClient:
         except rospy.ServiceException as e:
             print("Service call failed: %s"%e)
 
+    def delete_all_frames(self):
+        '''
+         Removes frames added via 'add_frame' method.
+        '''
+        req = DataRequest()
+        req.control_mode = 9
+
+        rospy.wait_for_service(self.srv_name)
+        try:
+            service = rospy.ServiceProxy(self.srv_name, Data)
+            resp = service(req)
+            return resp.success
+        except rospy.ServiceException as e:
+            print("Service call failed: %s"%e)
 
     def update_projected_point(self, point, frame):
         req = DataRequest()

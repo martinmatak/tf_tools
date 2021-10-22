@@ -31,6 +31,11 @@ class TFBroadcaster():
         self.mesh_position = None
         self.mesh_orientation = None
         self.projected_point = None
+        self.frames_position = []
+        self.frames_orientation = []
+        self.frames_names = []
+        self.frames_parent_frame = []
+
         s = rospy.Service("visualize", Data, self.callback)
 
     def callback(self, req):
@@ -74,6 +79,13 @@ class TFBroadcaster():
             self.update_normals_markers(normals_tails, normals_tips, frame, mode)
         elif control_mode == 7: # object mesh pose TF
             self.update_mesh_pose(req)
+        elif control_mode == 8: # add another TF to publish
+            self.add_frame(req)
+        elif control_mode == 9: # delete frames
+             self.frames_position = []
+             self.frames_orientation = []
+             self.frames_names = []
+             self.frames_parent_frame = []
         else:
             raise Exception("mode not supported yet")
          
@@ -96,6 +108,12 @@ class TFBroadcaster():
         self.mesh_orientation = [req.data[3], req.data[4], req.data[5], req.data[6]]
         self.mesh_frame_name = req.string_data[0]
         self.mesh_parent_frame = req.string_data[1]
+
+    def add_frame(self, req):
+        self.frames_position.append([req.data[0], req.data[1], req.data[2]])
+        self.frames_orientation.append([req.data[3], req.data[4], req.data[5], req.data[6]])
+        self.frames_names.append(req.string_data[0])
+        self.frames_parent_frame.append(req.string_data[1])
 
     def update_points_markers(self, points, frames):
         self.points_markers = []
@@ -242,6 +260,12 @@ class TFBroadcaster():
                                       self.mesh_frame_name,
                                       self.mesh_parent_frame)
 
+            for i, _ in enumerate(self.frames_position):
+                self.br.sendTransform(self.frames_position[i],
+                                      self.frames_orientation[i],
+                                      rospy.Time.now(),
+                                      self.frames_names[i],
+                                      self.frames_parent_frame[i])
 
             # frames are set in headers
             for marker in self.planes_markers:
