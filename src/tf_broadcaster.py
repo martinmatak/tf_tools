@@ -23,6 +23,7 @@ class TFBroadcaster():
         self.projected_pub = rospy.Publisher("projected_points", Marker, queue_size=1)
         self.object_normals_pub = rospy.Publisher("object_normals", Marker, queue_size=1)
         self.ftips_normals_pub = rospy.Publisher("ftips_normals", Marker, queue_size=1)
+        self.mesh_marker_pub = rospy.Publisher("mesh_marker", Marker, queue_size=1)
         self.br = tf.TransformBroadcaster()
         self.rate = rospy.Rate(1)
         self.thread_started = False
@@ -30,11 +31,12 @@ class TFBroadcaster():
         self.object_orientation = None
         self.mesh_position = None
         self.mesh_orientation = None
-        self.projected_point = None
+        self.projected_points = []
         self.frames_position = []
         self.frames_orientation = []
         self.frames_names = []
         self.frames_parent_frame = []
+        self.mesh_marker = None
 
         s = rospy.Service("visualize", Data, self.callback)
 
@@ -64,13 +66,13 @@ class TFBroadcaster():
         elif control_mode == 4: # estimated object pose TF
             self.update_object_pose(req)
         elif control_mode == 5: # projected point
-            point = np.zeros((3,1))
-            data = req.data
-            point[0,0] = data[0]
-            point[1,0] = data[1]
-            point[2,0] = data[2]
-            frame = req.string_data[0]
-            self.update_projected_point(point, frame)
+            points = []
+            points.append(parse_points(req.index_points))
+            points.append(parse_points(req.middle_points))
+            points.append(parse_points(req.ring_points))
+            points.append(parse_points(req.thumb_points))
+            frames = req.string_data
+            self.update_projected_points(points, frames)
         elif control_mode == 6: # visualize normals
             frame = req.string_data[0]
             mode = req.string_data[1]
@@ -86,6 +88,10 @@ class TFBroadcaster():
              self.frames_orientation = []
              self.frames_names = []
              self.frames_parent_frame = []
+        elif control_mode == 10:
+             mesh_resource = req.string_data[0]
+             frame_name = req.string_data[1]
+             self.update_mesh_marker(mesh_resource, frame_name)
         else:
             raise Exception("mode not supported yet")
          
@@ -176,27 +182,27 @@ class TFBroadcaster():
             elif mode == "OBJECT": 
                 self.object_normals_markers.append(marker)
 
-    def update_projected_point(self, point, frame):
-        print("updated projected point")
-        self.projected_point = []
-        marker = Marker()
-        marker.header.frame_id = frame
-        marker.type = marker.SPHERE
-        marker.action = marker.ADD
-        marker.scale.x = .003
-        marker.scale.y = .003
-        marker.scale.z = .003
-
-        marker.color.a = 1
-        marker.color.r = 255
-        marker.color.g = 140
-        marker.color.b = 0
-        marker.pose.orientation.w = 1.0
-        marker.pose.position.x = point[0]
-        marker.pose.position.y = point[1]
-        marker.pose.position.z = point[2]
-
-        self.projected_point = marker
+    def update_projected_points(self, points, frames):
+        self.projected_points = []
+        for i, finger in enumerate(points):
+            marker = Marker()
+            marker.header.frame_id = frames[i]
+            marker.ns = "points=" + str(i)
+            marker.type = marker.SPHERE_LIST
+            marker.action = marker.ADD
+            marker.scale.x = .003
+            marker.scale.y = .003
+            marker.scale.z = .003
+            marker = set_color(marker, i)
+            marker.pose.orientation.w = 1.0
+            for j in range(finger.shape[1]):
+                point_raw = finger[:,j]
+                point = Point()
+                point.x = point_raw[0]
+                point.y = point_raw[1]
+                point.z = point_raw[2]
+                marker.points.append(point)
+            self.projected_points.append(marker)
 
     def update_planes(self, planes, frames):
         self.planes_markers = []
@@ -234,6 +240,32 @@ class TFBroadcaster():
             #r,g,b,y depending on i
             marker = set_color(marker, i)
             self.planes_markers.append(marker)
+
+    def update_mesh_marker(self, mesh_resource, frame):
+        marker = Marker()
+        marker.header.frame_id = frame
+        marker.type = Marker.MESH_RESOURCE
+        marker.mesh_resource = mesh_resource
+        marker.id = 1
+        marker.action = Marker.MODIFY
+
+        position = [0,0,0]
+        orientation = [0,0,0,1]
+        scale = [1,1,1]
+        marker.pose.position.x = position[0]
+        marker.pose.position.y = position[1]
+        marker.pose.position.z = position[2]
+        marker.pose.orientation.x = orientation[0]
+        marker.pose.orientation.y = orientation[1]
+        marker.pose.orientation.z = orientation[2]
+        marker.pose.orientation.w = orientation[3]
+        marker.scale.x = scale[0]
+        marker.scale.y = scale[1]
+        marker.scale.z = scale[2]
+        marker.color.a = 1.0
+        marker.color.g = 1.0
+
+        self.mesh_marker = marker
 
     def publish(self):
         while not rospy.is_shutdown():
@@ -280,9 +312,11 @@ class TFBroadcaster():
             for marker in self.object_normals_markers:
                 self.object_normals_pub.publish(marker)
 
-            if self.projected_point is not None:
-                self.projected_pub.publish(self.projected_point)
+            for marker in self.projected_points:
+                self.projected_pub.publish(marker)
 
+            if self.mesh_marker is not None:
+                self.mesh_marker_pub.publish(self.mesh_marker)
 
             self.rate.sleep()
 

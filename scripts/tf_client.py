@@ -92,6 +92,20 @@ class TFClient:
         except rospy.ServiceException as e:
             print("Service call failed: %s"%e)
 
+    def update_marker_mesh(self, mesh_resource_path, frame):
+        req = DataRequest()
+        req.control_mode = 10
+        req.string_data = [mesh_resource_path, frame]
+
+        rospy.wait_for_service(self.srv_name)
+        try:
+            service = rospy.ServiceProxy(self.srv_name, Data)
+            resp = service(req)
+            return resp.success
+        except rospy.ServiceException as e:
+            print("Service call failed: %s"%e)
+
+
     def update_object_pose(self, position, rotation, obj_frame, parent_frame="world"):
         '''
         @param position Point
@@ -163,13 +177,25 @@ class TFClient:
         except rospy.ServiceException as e:
             print("Service call failed: %s"%e)
 
-    def update_projected_point(self, point, frame):
+    def update_projected_points(self, points, frames):
         req = DataRequest()
+        print("points: ", points)
         req.control_mode = 5
-        req.data = list(point.ravel())
-        req.string_data = [frame]
+        req.index_points = points[0].ravel('F') # 'F' denotes column vectors 
+        req.middle_points = points[1].ravel('F')
+        req.ring_points = points[2].ravel('F')
+        req.thumb_points = points[3].ravel('F')
+        req.string_data = frames
+        print("req: ", req)
 
-        return self.call_service(req)
+        rospy.wait_for_service(self.srv_name)
+        try:
+            service = rospy.ServiceProxy(self.srv_name, Data)
+            resp = service(req)
+            return resp.success
+        except rospy.ServiceException as e:
+            print("Service call failed: %s"%e)
+
 
     def call_service(self, req):
         rospy.wait_for_service(self.srv_name)
