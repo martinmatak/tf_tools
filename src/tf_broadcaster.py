@@ -24,6 +24,8 @@ class TFBroadcaster():
         self.object_normals_pub = rospy.Publisher("object_normals", Marker, queue_size=1)
         self.ftips_normals_pub = rospy.Publisher("ftips_normals", Marker, queue_size=1)
         self.mesh_marker_pub = rospy.Publisher("mesh_marker", Marker, queue_size=1)
+        self.collision_spheres_pub = rospy.Publisher("collision_spheres", Marker, queue_size=1)
+        self.update_collision_spheres()
         self.br = tf.TransformBroadcaster()
         self.rate = rospy.Rate(1)
         self.thread_started = False
@@ -121,6 +123,135 @@ class TFBroadcaster():
         self.frames_names.append(req.string_data[0])
         self.frames_parent_frame.append(req.string_data[1])
 
+    def update_collision_spheres(self):
+        self.collision_spheres_markers = []
+
+        frames = ["lbr4_" + str(i) + "_link" for i in range(2,7)]
+        for i in range(len(frames)):
+            marker = Marker()
+            marker.header.frame_id = frames[i]
+            marker.ns = "frame_sphere=" + str(frames[i])
+            marker.type = marker.SPHERE
+            marker.action = marker.ADD
+            marker.scale.x = .19
+            marker.scale.y = .19
+            marker.scale.z = .19
+            marker = set_color(marker, 2, 0.5)
+            marker.pose.orientation.w = 1.0
+            self.collision_spheres_markers.append(marker)
+
+        frame = "lbr4_7_link"
+        marker = Marker()
+        marker.header.frame_id = frame
+        marker.ns = "frame_sphere=" + frame
+        marker.type = marker.SPHERE
+        marker.action = marker.ADD
+        marker.scale.x = .1
+        marker.scale.y = .1
+        marker.scale.z = .1
+        marker = set_color(marker, 2, 0.5)
+        marker.pose.orientation.w = 1.0
+        self.collision_spheres_markers.append(marker)
+
+        frame = "allegro_mount"
+        marker = Marker()
+        marker.header.frame_id = frame
+        marker.ns = "frame_sphere=" + frame
+        marker.type = marker.SPHERE
+        marker.action = marker.ADD
+        marker.scale.x = .1
+        marker.scale.y = .1
+        marker.scale.z = .1
+        marker = set_color(marker, 2, 0.5)
+        marker.pose.orientation.w = 1.0
+        self.collision_spheres_markers.append(marker)
+
+        frame = "virtual_palm_center"
+        marker = Marker()
+        marker.header.frame_id = frame
+        marker.ns = "frame_sphere=" + frame
+        marker.type = marker.SPHERE
+        marker.action = marker.ADD
+        marker.scale.x = .14
+        marker.scale.y = .14
+        marker.scale.z = .14
+        marker = set_color(marker, 2, 0.5)
+        marker.pose.orientation.w = 1.0
+        self.collision_spheres_markers.append(marker)
+
+        frames = ["index_link_" + str(i) for i in range(1,4)]
+        frames += ["middle_link_" + str(i) for i in range(1,4)]
+        frames += ["ring_link_" + str(i) for i in range(1,4)]
+        frames += ["thumb_link_" + str(i) for i in range(1,4)]
+        for i in range(len(frames)):
+            marker = Marker()
+            marker.header.frame_id = frames[i]
+            marker.ns = "frame_sphere=" + str(frames[i])
+            marker.type = marker.SPHERE
+            marker.action = marker.ADD
+            marker.scale.x = .035
+            marker.scale.y = .035
+            marker.scale.z = .035
+            marker = set_color(marker, 2, 0.5)
+            marker.pose.orientation.w = 1.0
+            self.collision_spheres_markers.append(marker)
+
+        ends = ["_biotac_nail", "_biotac_origin"]
+        fingers = ["index", "middle", "ring", "thumb"]
+        frames = []
+        for finger in fingers:
+            for end in ends:
+                frames.append(finger + "_biotac_origin")
+        for i in range(len(frames)):
+            marker = Marker()
+            marker.header.frame_id = frames[i]
+            marker.ns = "frame_sphere=" + str(frames[i])
+            marker.type = marker.SPHERE
+            marker.action = marker.ADD
+            marker.scale.x = .015
+            marker.scale.y = .015
+            marker.scale.z = .015
+            marker = set_color(marker, 2, 0.5)
+            marker.pose.orientation.w = 1.0
+            self.collision_spheres_markers.append(marker)
+
+        for finger in ["index", "middle", "ring", "thumb"]:
+            for i in range(1,4):
+                if finger == "thumb" and i == 1:
+                    continue
+                frame = finger + "_virtual_sphere_" + str(i)
+                marker = Marker()
+                marker.header.frame_id = frame
+                marker.ns = "frame_sphere=" + frame
+                marker.type = marker.SPHERE
+                marker.action = marker.ADD
+                marker.scale.x = .035
+                marker.scale.y = .035
+                marker.scale.z = .035
+                if i == 3:
+                    marker.scale.x = 0.025
+                    marker.scale.y = 0.025
+                    marker.scale.z = 0.025
+                marker = set_color(marker, 2, 0.5)
+                marker.pose.orientation.w = 1.0
+                self.collision_spheres_markers.append(marker)
+
+            for i in range(1,3):
+                frame = finger + "_biotac_virtual_sphere_" + str(i)
+                marker = Marker()
+                marker.header.frame_id = frame
+                marker.ns = "frame_sphere=" + frame
+                marker.type = marker.SPHERE
+                marker.action = marker.ADD
+                marker.scale.x = .015
+                marker.scale.y = .015
+                marker.scale.z = .015
+                marker = set_color(marker, 2, 0.5)
+                marker.pose.orientation.w = 1.0
+                self.collision_spheres_markers.append(marker)
+
+
+
     def update_points_markers(self, points, frames):
         self.points_markers = []
         for i, finger in enumerate(points):
@@ -129,9 +260,9 @@ class TFBroadcaster():
             marker.ns = "points=" + str(i)
             marker.type = marker.SPHERE_LIST
             marker.action = marker.ADD
-            marker.scale.x = .003
-            marker.scale.y = .003
-            marker.scale.z = .003
+            marker.scale.x = .01
+            marker.scale.y = .01
+            marker.scale.z = .01
             marker = set_color(marker, i)
             marker.pose.orientation.w = 1.0
             for j in range(finger.shape[1]):
@@ -312,6 +443,9 @@ class TFBroadcaster():
             for marker in self.object_normals_markers:
                 self.object_normals_pub.publish(marker)
 
+            for marker in self.collision_spheres_markers:
+                self.collision_spheres_pub.publish(marker)
+
             for marker in self.projected_points:
                 self.projected_pub.publish(marker)
 
@@ -320,8 +454,8 @@ class TFBroadcaster():
 
             self.rate.sleep()
 
-def set_color(marker,i):
-    marker.color.a = 1 # transparency 
+def set_color(marker,i, alpha=1):
+    marker.color.a = alpha # transparency 
     if i == 0: # index
         marker.color.r = 1
         marker.color.g = 0

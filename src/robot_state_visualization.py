@@ -12,7 +12,7 @@ from grasp_pipeline.srv import *
 
 class RobotStatePublisher():
     def __init__(self, topic, jvalue):
-        hand_only = True
+        hand_only = False
 
 
         rospy.init_node("state_viz") 
