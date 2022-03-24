@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-  <node name="robot_state_visualization" pkg="tf_tools" type="floating_allegro_visualization.py" output="screen"/>
+  <node name="robot_state_visualization" pkg="tf_tools" type="robot_state_visualization.py" output="screen"/>
   <node name="fixed_tf_broadcaster" pkg="tf_tools" type="tf_broadcaster.py" output="screen"/>
 </launch>

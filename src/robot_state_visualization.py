@@ -10,7 +10,7 @@ from std_msgs.msg import ColorRGBA
 sys.path.append(roslib.packages.get_pkg_dir('grasp_pipeline'))
 from grasp_pipeline.srv import *
 
-ARM_JS_TOPIC = "iiwa/joint_states"
+ARM_JS_TOPIC = "lbr4/joint_states"
 
 class RobotStatePublisher():
     def __init__(self, topic, jvalue):
@@ -20,8 +20,8 @@ class RobotStatePublisher():
         rospy.init_node("state_viz") 
         self.robot_state_pub = rospy.Publisher(topic, DisplayRobotState, queue_size=1)
         self.robot_state = DisplayRobotState()
-        #arm_joints = ["lbr4_j0", "lbr4_j1", "lbr4_j2", "lbr4_j3", "lbr4_j4", "lbr4_j5", "lbr4_j6"]
-        arm_joints = ["iiwa_joint_" + str(i) for i in range(1,8)]
+        arm_joints = ["lbr4_j0", "lbr4_j1", "lbr4_j2", "lbr4_j3", "lbr4_j4", "lbr4_j5", "lbr4_j6"]
+        #arm_joints = ["iiwa_joint_" + str(i) for i in range(1,8)]
         hand_joints = ["index_joint_0", "index_joint_1", "index_joint_2", "index_joint_3",
                        "middle_joint_0", "middle_joint_1", "middle_joint_2", "middle_joint_3",
                        "ring_joint_0", "ring_joint_1", "ring_joint_2", "ring_joint_3",
@@ -54,7 +54,7 @@ class RobotStatePublisher():
         if request is None or len(request.joint_state) == 0:
             arm_msg = rospy.wait_for_message(ARM_JS_TOPIC, JointState)
             arm_joints = arm_msg.position
-            hand_msg = rospy.wait_for_message("allegro_hand_right/joint_states", JointState)
+            hand_msg = rospy.wait_for_message("allegro/joint_states", JointState)
             hand_joints = hand_msg.position
             all_joints = arm_joints + hand_joints
             assert len(all_joints) == 23
