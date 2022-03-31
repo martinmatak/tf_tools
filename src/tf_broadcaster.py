@@ -24,6 +24,7 @@ class TFBroadcaster():
         self.object_normals_pub = rospy.Publisher("object_normals", Marker, queue_size=1)
         self.ftips_normals_pub = rospy.Publisher("ftips_normals", Marker, queue_size=1)
         self.mesh_marker_pub = rospy.Publisher("mesh_marker", Marker, queue_size=1)
+        self.box_marker_pub = rospy.Publisher("box_marker", Marker, queue_size=1)
         self.collision_spheres_pub = rospy.Publisher("collision_spheres", Marker, queue_size=1)
         self.update_collision_spheres()
         self.br = tf.TransformBroadcaster()
@@ -39,6 +40,7 @@ class TFBroadcaster():
         self.frames_names = []
         self.frames_parent_frame = []
         self.mesh_marker = None
+        self.box_marker = None
 
         s = rospy.Service("visualize", Data, self.callback)
 
@@ -94,6 +96,12 @@ class TFBroadcaster():
              mesh_resource = req.string_data[0]
              frame_name = req.string_data[1]
              self.update_mesh_marker(mesh_resource, frame_name)
+        elif control_mode == 11:
+             frame = req.string_data[0]
+             x = float(req.string_data[1])
+             y = float(req.string_data[2])
+             z = float(req.string_data[3])
+             self.update_box_marker(frame, x,y,z)
         else:
             raise Exception("mode not supported yet")
          
@@ -283,6 +291,33 @@ class TFBroadcaster():
             marker = set_color(marker, i)
             self.planes_markers.append(marker)
 
+    def update_box_marker(self, frame, x, y, z):
+        self.box_marker = None
+
+        marker = Marker()
+        marker.header.frame_id = frame
+        marker.type = Marker.CUBE
+        marker.id = 2
+        marker.action = Marker.MODIFY
+
+        position = [0,0,0]
+        orientation = [0,0,0,1]
+        scale = [x,y,z]
+        marker.pose.position.x = position[0]
+        marker.pose.position.y = position[1]
+        marker.pose.position.z = position[2]
+        marker.pose.orientation.x = orientation[0]
+        marker.pose.orientation.y = orientation[1]
+        marker.pose.orientation.z = orientation[2]
+        marker.pose.orientation.w = orientation[3]
+        marker.scale.x = scale[0]
+        marker.scale.y = scale[1]
+        marker.scale.z = scale[2]
+        marker.color.a = 0.6
+        marker.color.b = 1.0
+
+        self.box_marker = marker
+
     def update_mesh_marker(self, mesh_resource, frame):
         self.mesh_marker = None
         marker = Marker()
@@ -363,6 +398,8 @@ class TFBroadcaster():
 
             if self.mesh_marker is not None:
                 self.mesh_marker_pub.publish(self.mesh_marker)
+            if self.box_marker is not None:
+                self.box_marker_pub.publish(self.box_marker)
 
             self.rate.sleep()
 
@@ -388,12 +425,10 @@ def set_color(marker,i, alpha=1):
         marker.color.r = 1
         marker.color.g = 0
         marker.color.b = 1
-
-
     return marker
 
 def parse_points(points):
-    nr_points = len(points) / 3
+    nr_points = int(len(points)/3)
     np_points = np.zeros((3,nr_points))
     for i in range(nr_points):
         np_points[:,i] = points[i*3:(i+1)*3]

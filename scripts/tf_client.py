@@ -105,6 +105,19 @@ class TFClient:
         except rospy.ServiceException as e:
             print("Service call failed: %s"%e)
 
+    def update_box_mesh(self, frame, width, height, depth):
+        req = DataRequest()
+        req.control_mode = 11
+        req.string_data = [frame, str(width), str(height), str(depth)]
+
+        rospy.wait_for_service(self.srv_name)
+        try:
+            service = rospy.ServiceProxy(self.srv_name, Data)
+            resp = service(req)
+            return resp.success
+        except rospy.ServiceException as e:
+            print("Service call failed: %s"%e)
+
 
     def update_object_pose(self, position, rotation, obj_frame, parent_frame="world"):
         '''
