@@ -10,6 +10,7 @@ from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
 from scipy.spatial.transform import Rotation as R
 
+ARM_NAME = "lbr4"
 class TFBroadcaster():
     def __init__(self):
         rospy.init_node("fixed_tf_broadcater")# for debugging
@@ -28,7 +29,7 @@ class TFBroadcaster():
         self.collision_spheres_pub = rospy.Publisher("collision_spheres", Marker, queue_size=1)
         self.update_collision_spheres()
         self.br = tf.TransformBroadcaster()
-        self.rate = rospy.Rate(1)
+        self.rate = rospy.Rate(100)
         self.thread_started = False
         self.object_position = None
         self.object_orientation = None
@@ -135,11 +136,16 @@ class TFBroadcaster():
         link_diameter= {'2': 0.195, '3': 0.195, '4': 0.195, '5': 0.195, '6': 0.195, '7': 0.10500000000000001, 'palm': 0.005, 'allegro_mount': 0.10500000000000001, 'virtual_palm_center': 0.14500000000000002, 'index_link_0': 0.0, 'index_link_1': 0.04, 'index_link_2': 0.04, 'index_link_3': 0.04, 'middle_link_0': 0.0, 'middle_link_1': 0.04, 'middle_link_2': 0.04, 'middle_link_3': 0.04, 'ring_link_0': 0.0, 'ring_link_1': 0.04, 'ring_link_2': 0.04, 'ring_link_3': 0.04, 'thumb_link_0': 0.0, 'thumb_link_1': 0.04, 'thumb_link_2': 0.04, 'thumb_link_3': 0.04, 'index_biotac_origin': 0.02, 'middle_biotac_origin': 0.02, 'ring_biotac_origin': 0.02, 'thumb_biotac_origin': 0.02, 'index_virtual_sphere_1': 0.04, 'index_virtual_sphere_2': 0.04, 'index_virtual_sphere_3': 0.030000000000000002, 'index_biotac_virtual_sphere_1': 0.02, 'index_biotac_virtual_sphere_2': 0.02, 'middle_virtual_sphere_1': 0.04, 'middle_virtual_sphere_2': 0.04, 'middle_virtual_sphere_3': 0.030000000000000002, 'middle_biotac_virtual_sphere_1': 0.02, 'middle_biotac_virtual_sphere_2': 0.02, 'ring_virtual_sphere_1': 0.04, 'ring_virtual_sphere_2': 0.04, 'ring_virtual_sphere_3': 0.030000000000000002, 'ring_biotac_virtual_sphere_1': 0.02, 'ring_biotac_virtual_sphere_2': 0.02, 'thumb_virtual_sphere_2': 0.04, 'thumb_virtual_sphere_3': 0.030000000000000002, 'thumb_biotac_virtual_sphere_1': 0.02, 'thumb_biotac_virtual_sphere_2': 0.02}
 
         self.collision_spheres_markers = []
-
-        #frames = ["lbr4_" + str(i) + "_link" for i in range(2,8)]
-        frames = ["iiwa_link_" + str(i) for i in range(2,8)]
+        
+        if ARM_NAME == "lbr4":
+            frames = ["lbr4_" + str(i) + "_link" for i in range(2,8)]
+        else:
+            frames = ["iiwa_link_" + str(i) for i in range(2,8)]
         for i in range(len(frames)):
-            sphere_id = frames[i].split("_")[-1]
+            if "iiwa" in frames[i]:
+                sphere_id = frames[i].split("_")[-1]
+            else:
+                sphere_id = frames[i].split("_")[1]
             marker = Marker()
             marker.header.frame_id = frames[i]
             marker.ns = "frame_sphere=" + str(frames[i])
