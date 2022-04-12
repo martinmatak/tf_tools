@@ -16,6 +16,7 @@ float64[] normal_3_tip
 
 string[] string_data
 float64[] data
+ROSMap[] spheres
 ---
 bool success
 

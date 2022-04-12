@@ -5,6 +5,7 @@ from sensor_msgs.msg import JointState
 import sys
 import roslib.packages as rp
 from tf_tools.srv import *
+from tf_tools.msg import ROSMap
 
 class TFClient:
     def __init__(self):
@@ -181,6 +182,23 @@ class TFClient:
         '''
         req = DataRequest()
         req.control_mode = 9
+
+        rospy.wait_for_service(self.srv_name)
+        try:
+            service = rospy.ServiceProxy(self.srv_name, Data)
+            resp = service(req)
+            return resp.success
+        except rospy.ServiceException as e:
+            print("Service call failed: %s"%e)
+
+    def update_collision_spheres(self, spheres_poses, spheres_diameters):
+        req = DataRequest()
+        req.control_mode = 12
+        spheres_ros = []
+        for sphere in spheres_poses:
+            ros_map = ROSMap(sphere,spheres_poses[sphere], spheres_diameters[sphere])
+            spheres_ros.append(ros_map)
+        req.spheres = spheres_ros
 
         rospy.wait_for_service(self.srv_name)
         try:
