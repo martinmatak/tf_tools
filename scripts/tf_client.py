@@ -159,14 +159,14 @@ class TFClient:
             print("Service call failed: %s"%e)
 
 
-    def add_frame(self, position, rotation, obj_frame, parent_frame="world"):
+    def add_frame(self, position, rotation, frame_name, parent_frame="world"):
         '''
         position and rotation are arrays
         '''
         req = DataRequest()
         req.control_mode = 8
         req.data = [position[0], position[1], position[2], rotation[0], rotation[1], rotation[2], rotation[3]]
-        req.string_data = [obj_frame, parent_frame]
+        req.string_data = [frame_name, parent_frame]
 
         rospy.wait_for_service(self.srv_name)
         try:
